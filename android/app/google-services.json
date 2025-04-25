@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "431070503170",
+    "project_id": "thinktank-15f71",
+    "storage_bucket": "thinktank-15f71.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431070503170:android:e2ad3a9db2d0268f5a621b",
+        "android_client_info": {
+          "package_name": "com.example.thinktank"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUyAQs5DqwMVP6GKlkK8tUJScLn-zOpts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
