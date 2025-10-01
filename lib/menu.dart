@@ -6,9 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thinktank/main.dart';
 import 'package:thinktank/profile.dart';
 import 'package:thinktank/settings.dart';
-import 'package:thinktank/login_page/login.dart';
-import 'package:thinktank/sectionpage.dart';
-// Ensure that LoginPage is defined in login.dart and exported properly.
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -185,12 +182,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
 
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => AuthGate(
-                          auth: FirebaseAuth.instance,
-                          loginPage: const Login(),
-                          sectionPage: const Sectionpage(),
-                        )),
+                MaterialPageRoute(builder: (context) => const AuthGate()),
                 (route) => false,
               );
             },
