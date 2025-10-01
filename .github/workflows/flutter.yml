@@ -1,4 +1,4 @@
-name: Flutter Mobile CI
+name: Flutter CI/CD
 
 on:
   push:
@@ -8,13 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest   # macOS is needed for iOS builds
+    runs-on: ubuntu-latest # no need for macOS since it's Android only
+
+    env:
+      CI: true
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -25,7 +27,6 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      # ---------- ANDROID ----------
       - name: Build Android APK
         run: flutter build apk --release
 
@@ -35,17 +36,10 @@ jobs:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # ---------- IOS ----------
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install --repo-update
-
-      - name: Build iOS IPA
-        run: flutter build ipa --release --no-codesign
-
-      - name: Upload iOS IPA
-        uses: actions/upload-artifact@v4
+      - name: upload artifact to Firebase App Distribution
+        uses: emertozd/Firebase-Distribution-Github-Action@v2
         with:
-          name: ios-ipa
-          path: build/ios/ipa/*.ipa
+          appId: ${{secrets.FIREBASE_APP_ID_ANDROID_DEV}}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_APP_DISTRIBUTION_CREDENTIAL_FILE_CONTENT }}
+          groups: android
+          file: build/app/outputs/flutter-apk/app-release.apk
