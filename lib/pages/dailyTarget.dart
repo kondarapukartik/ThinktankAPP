@@ -81,7 +81,6 @@ class _DailytargetPageState extends State<DailytargetPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _generateDailyTargets,
-              child: const Text('Generate Daily Targets'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurpleAccent,
                 padding:
@@ -90,6 +89,7 @@ class _DailytargetPageState extends State<DailytargetPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: const Text('Generate Daily Targets'),
             ),
             const SizedBox(height: 20),
             if (_isLoading) const CircularProgressIndicator(),

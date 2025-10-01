@@ -122,7 +122,7 @@ Keep the message concise, supportive, and motivating.
                   padding: const EdgeInsets.only(
                       top: 10, bottom: 10, right: 16, left: 16),
                   decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 255, 255, 255)
+                    color: const Color.fromARGB(255, 255, 255, 255)
                         .withOpacity(0.9), // Slightly opaque background
                     borderRadius: BorderRadius.circular(20.0),
                     boxShadow: [
@@ -198,8 +198,8 @@ Keep the message concise, supportive, and motivating.
               const SizedBox(height: 50),
               Center(
                 child: ElevatedButton(
-                  child: const Text('Solution'),
                   onPressed: _onGenerateButtonPressed,
+                  child: const Text('Solution'),
                 ),
               ),
               const SizedBox(height: 30),
