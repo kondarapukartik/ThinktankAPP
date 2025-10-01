@@ -1,24 +1,15 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'login_page/login.dart';
-import 'sectionpage.dart';
-
-// Only import Firebase if not in CI (optional)
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'login_page/login.dart'; // your login page
+import 'sectionpage.dart'; // your main page after login
 
+// Define your custom darkBlue color (replace with your actual value)
 const Color darkBlue = Color(0xFF001F3F);
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Skip Firebase initialization during CI or tests
-  const isCI = bool.fromEnvironment('CI');
-
-  if (!isCI) {
-    await Firebase.initializeApp();
-  }
-
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -40,23 +31,23 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If running in CI, show a placeholder
-    const isCI = bool.fromEnvironment('CI');
-    if (isCI) return const Scaffold(body: SizedBox());
-
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        // While Firebase is still initializing
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
+        // If the user is NOT logged in, show the Login page
         if (!snapshot.hasData || snapshot.data == null) {
           return const Login();
         }
 
+        // If the user IS logged in, navigate to the Sectionpage
+        // This ensures navigation after login without building issues
         Future.microtask(() {
           if (snapshot.hasData) {
             Navigator.pushReplacement(
@@ -66,6 +57,7 @@ class AuthGate extends StatelessWidget {
           }
         });
 
+        // Return a placeholder widget to prevent any issues during navigation
         return const SizedBox();
       },
     );
