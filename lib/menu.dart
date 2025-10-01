@@ -182,7 +182,9 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
 
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const AuthGate()),
+                MaterialPageRoute(
+                    builder: (context) =>
+                        AuthGate(auth: FirebaseAuth.instance)),
                 (route) => false,
               );
             },

@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # no need for macOS since it's Android only
+    runs-on: ubuntu-latest
 
     env:
       CI: true
@@ -21,8 +21,21 @@ jobs:
         with:
           channel: stable
 
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze
 
       - name: Run tests
         run: flutter test
@@ -30,16 +43,16 @@ jobs:
       - name: Build Android APK
         run: flutter build apk --release
 
-      - name: Upload Android APK
+      - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: upload artifact to Firebase App Distribution
+      - name: Upload artifact to Firebase App Distribution
         uses: emertozd/Firebase-Distribution-Github-Action@v2
         with:
-          appId: ${{secrets.FIREBASE_APP_ID_ANDROID_DEV}}
+          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID_DEV }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_APP_DISTRIBUTION_CREDENTIAL_FILE_CONTENT }}
           groups: android
           file: build/app/outputs/flutter-apk/app-release.apk
