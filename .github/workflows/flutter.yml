@@ -1,4 +1,4 @@
-name: CI / CD for ThinktankAPP
+name: CI / CD - ThinktankAPP
 
 on:
   push:
@@ -13,12 +13,14 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        platform: [android, web]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Java (for Android builds, Flutter)
+      - name: Set up Java (required for Android)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -27,29 +29,27 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'   # or specific version you use
+          flutter-version: 'stable'
 
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Analyze (lint / static checks)
+      - name: Analyze code
         run: flutter analyze
 
       - name: Run tests
         run: flutter test --coverage
 
-      - name: Build APK (debug or release)
+      - name: Build Android APK
+        if: matrix.platform == 'android'
         run: flutter build apk --release
 
-      - name: Build iOS (if you need, for macos runner or cross-platform)
-        if: runner.os == 'macOS'
-        run: flutter build ios --release --no-codesign
-
-      - name: Build web
+      - name: Build Web
+        if: matrix.platform == 'web'
         run: flutter build web
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-binaries
           path: |
@@ -59,35 +59,39 @@ jobs:
   deploy:
     name: Deploy
     needs: build-and-test
-    if: github.ref == 'refs/heads/main'   # only deploy on main branch
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: app-binaries
           path: ./build_artifacts
 
-      # Example: Deploy web to Firebase Hosting
-      - name: Setup Firebase CLI
+      # Example: Deploy Web to Firebase Hosting
+      - name: Install Firebase CLI
         uses: w9jds/firebase-action@v2
         with:
           args: install
 
-      - name: Deploy to Firebase Hosting
+      - name: Deploy Web to Firebase
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: firebase deploy --only hosting
 
-      # Example: Upload APK to a release or to Firebase App Distribution or Play Store
-      - name: Upload APK to GitHub Release
-        uses: softprops/action-gh-release@v1
+      # Example: Upload APK to GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           files: build_artifacts/**/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Example: Deploy iOS to TestFlight (if applicable)
-      # You could use fastlane or other tools here.
-
+      # Optional: iOS Deployment placeholder
+      # - name: Deploy iOS to TestFlight
+      #   uses: apple-actions/app-store-release@v1
+      #   with:
+      #     api-key-id: ${{ secrets.APP_STORE_API_KEY_ID }}
+      #     api-key: ${{ secrets.APP_STORE_API_KEY }}
+      #     issuer-id: ${{ secrets.APP_STORE_ISSUER_ID }}
+      #     ipa-path: build/ios/ipa/*.ipa
