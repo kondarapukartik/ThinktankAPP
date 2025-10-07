@@ -1,55 +1,93 @@
-name: Flutter CI/CD
+name: CI / CD for ThinktankAPP
 
 on:
   push:
     branches:
       - main
+      - develop
   pull_request:
+    branches:
+      - '*'
 
 jobs:
-  build:
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
 
-    env:
-      CI: true
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Flutter
+      - name: Set up Java (for Android builds, Flutter)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 11
+
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: 'stable'   # or specific version you use
 
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Install dependencies
+      - name: Flutter pub get
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Analyze (lint / static checks)
+        run: flutter analyze
 
-      - name: Build Android APK
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Build APK (debug or release)
         run: flutter build apk --release
 
-      - name: Upload Android APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Build iOS (if you need, for macos runner or cross-platform)
+        if: runner.os == 'macOS'
+        run: flutter build ios --release --no-codesign
 
-      - name: Upload artifact to Firebase App Distribution
-        uses: emertozd/Firebase-Distribution-Github-Action@v2
+      - name: Build web
+        run: flutter build web
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
-          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID_DEV }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_APP_DISTRIBUTION_CREDENTIAL_FILE_CONTENT }}
-          groups: android
-          file: build/app/outputs/flutter-apk/app-release.apk
+          name: app-binaries
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/web/**
+
+  deploy:
+    name: Deploy
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'   # only deploy on main branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: app-binaries
+          path: ./build_artifacts
+
+      # Example: Deploy web to Firebase Hosting
+      - name: Setup Firebase CLI
+        uses: w9jds/firebase-action@v2
+        with:
+          args: install
+
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only hosting
+
+      # Example: Upload APK to a release or to Firebase App Distribution or Play Store
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build_artifacts/**/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Example: Deploy iOS to TestFlight (if applicable)
+      # You could use fastlane or other tools here.
+
