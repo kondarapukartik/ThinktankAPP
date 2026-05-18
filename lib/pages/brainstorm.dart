@@ -1,5 +1,5 @@
+// ignore: file_names
 import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -9,8 +9,7 @@ class BrainStormPage extends StatefulWidget {
   const BrainStormPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _BrainstormPageState createState() => _BrainstormPageState();
+  State<BrainStormPage> createState() => _BrainstormPageState();
 }
 
 class _BrainstormPageState extends State<BrainStormPage>
@@ -20,6 +19,7 @@ class _BrainstormPageState extends State<BrainStormPage>
   final TextEditingController _controller3 = TextEditingController();
   final TextEditingController _controller4 = TextEditingController();
   final TextEditingController _controller5 = TextEditingController();
+
   bool _isLoading = false;
 
   @override
@@ -32,21 +32,60 @@ class _BrainstormPageState extends State<BrainStormPage>
     super.dispose();
   }
 
-//Gemini API
+  /// GEMINI API
   Future<void> _generatePrompt() async {
     final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: 'AIzaSyAOkOh4gSDYFNP4jM_n7x5yk2DNlvALLQE');
+      model: "gemini-2.5-flash",
+      apiKey: "AIzaSyDFPEosgraV0yCVzkGRcMDOPPOa2YVOOKs",
+    );
 
-    const predefinedPrompt = "Brainstorming Session Summary:\n";
     final combinedPrompt = """
-$predefinedPrompt
-1. What problem do you want to solve? ${_controller1.text}
-2. Who needs this solution? ${_controller2.text}
-3. How do people currently solve this problem? ${_controller3.text}
-4. What makes your solution different/better? ${_controller4.text}
-5. How will you reach your target customers? ${_controller5.text}
+Create a brainstorming summary in MARKDOWN format.
+
+Use the following information:
+
+Problem:
+${_controller1.text}
+
+Target Users:
+${_controller2.text}
+
+Current Solutions:
+${_controller3.text}
+
+Unique Advantage:
+${_controller4.text}
+
+Customer Reach Strategy:
+${_controller5.text}
+
+Return the result structured like this:
+
+# Brainstorming Summary
+
+## Problem
+Explain the problem clearly.
+
+## Target Users
+Describe who needs this solution.
+
+## Current Solutions
+Explain how people solve this problem today.
+
+## Unique Advantage
+Explain what makes this idea better or different.
+
+## Customer Reach Strategy
+Explain how the startup can reach its customers.
+
+## Suggested Startup Ideas
+- Idea suggestion
+- Idea suggestion
+- Idea suggestion
+
+Keep everything clear, beginner friendly and short.
 """;
+
     final content = [Content.text(combinedPrompt)];
 
     final response = await model.generateContent(content);
@@ -59,12 +98,10 @@ $predefinedPrompt
       _isLoading = false;
     });
 
-    // Navigate to PromptPage with the generated response
     Navigator.push(
-      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(
-        builder: (context) => PromptPage(prompt: response.text as String),
+        builder: (context) => PromptPage(prompt: response.text ?? ""),
       ),
     );
   }
@@ -73,151 +110,51 @@ $predefinedPrompt
     setState(() {
       _isLoading = true;
     });
+
     _generatePrompt();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Brain Storm")),
+      appBar: AppBar(
+        title: const Text("Brain Storm"),
+      ),
       body: Stack(
         fit: StackFit.expand,
-        children: <Widget>[
+        children: [
           Image.asset(
             "images/bg1.jpg",
             fit: BoxFit.cover,
           ),
           BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(
-              color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0),
-            ),
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Container(color: Colors.transparent),
           ),
           Center(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: TextField(
+                  _buildTextField(
                       controller: _controller1,
-                      style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255)),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        labelText: 'What problem do you want to solve?',
-                        labelStyle: const TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 0, bottom: 0, right: 10, left: 10),
-                    child: TextField(
+                      label: "What problem do you want to solve?"),
+                  _buildTextField(
                       controller: _controller2,
-                      style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255)),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        labelText: 'Who needs this solution?',
-                        labelStyle: const TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 0, bottom: 0, right: 10, left: 10),
-                    child: TextField(
+                      label: "Who needs this solution?"),
+                  _buildTextField(
                       controller: _controller3,
-                      style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255)),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        labelText:
-                            'How do people currently solve this problem?',
-                        labelStyle: const TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 0, bottom: 0, right: 10, left: 10),
-                    child: TextField(
+                      label: "How do people currently solve this problem?"),
+                  _buildTextField(
                       controller: _controller4,
-                      style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255)),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        labelText: 'What makes your solution different/better?',
-                        labelStyle: const TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 0, bottom: 0, right: 10, left: 10),
-                    child: TextField(
+                      label: "What makes your solution different/better?"),
+                  _buildTextField(
                       controller: _controller5,
-                      style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255)),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        labelText: 'How will you reach your target customers?',
-                        labelStyle: const TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
+                      label: "How will you reach your target customers?"),
                   const SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _onGenerateButtonPressed,
-                      child: const Text('Generate Prompt'),
-                    ),
+                  ElevatedButton(
+                    onPressed: _onGenerateButtonPressed,
+                    child: const Text("Generate Prompt"),
                   ),
                   const SizedBox(height: 30),
                   if (_isLoading) const CircularProgressIndicator(),
@@ -226,6 +163,34 @@ $predefinedPrompt
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 15,
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.white),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.white),
+          ),
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white),
+        ),
       ),
     );
   }

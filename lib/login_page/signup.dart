@@ -3,6 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart'; // Import login page to navigate back
 
 // Define your custom colors for neon effect
@@ -25,6 +26,11 @@ class _SignUpPageState extends State<SignUpPage> {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
+      String uid = userCredential.user!.uid;
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(uid)
+          .set({"email": email, "name": "", "bio": ""});
       if (kDebugMode) {
         print("User registered: ${userCredential.user!.email}");
       }

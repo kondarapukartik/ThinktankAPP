@@ -1,119 +1,202 @@
 // ignore: file_names
 import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class BusinessPlanPage extends StatefulWidget {
   const BusinessPlanPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _BusinessPage createState() => _BusinessPage();
+  State<BusinessPlanPage> createState() => _BusinessPlanPageState();
 }
 
-class _BusinessPage extends State<BusinessPlanPage>
+class _BusinessPlanPageState extends State<BusinessPlanPage>
     with TickerProviderStateMixin {
-  bool _isLoading = false;
-  String _generatedText = '';
   final TextEditingController _controller = TextEditingController();
 
-  Future<void> _generatePrompt() async {
-    final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: 'AIzaSyAOkOh4gSDYFNP4jM_n7x5yk2DNlvALLQE');
+  bool _isLoading = false;
+  String _generatedText = "";
 
-    const predefinedPrompt = "Business mind map:\n";
-    final combinedPrompt = """
-$predefinedPrompt
-1. Create a flow chart for the following startup idea${_controller.text} that how can they get started in the market?,How can they do branding of their startups?,How can they get more profits? etc.. according to you they will only provide the startup idea you need to guide them in your own way that can be helpful for them.
-2. For the begginers and keep it less points and clear.
-3.write with creativity.""";
-    final content = [Content.text(combinedPrompt)];
+  Future<void> _generatePlan() async {
+    try {
+      final model = GenerativeModel(
+        model: "gemini-2.5-flash",
+        apiKey: "AIzaSyDFPEosgraV0yCVzkGRcMDOPPOa2YVOOKs",
+      );
 
-    final response = await model.generateContent(content);
+      final prompt = """
+Startup Idea: ${_controller.text}
 
-    if (kDebugMode) {
-      print(response.text);
+Create a beginner-friendly business roadmap.
+
+Return the result in MARKDOWN format.
+
+Structure:
+
+## Step 1: Idea Validation
+- point
+- point
+
+## Step 2: Market Research
+- point
+- point
+
+## Step 3: Branding & Marketing
+- point
+- point
+
+## Step 4: Product Launch
+- point
+- point
+
+## Step 5: Customer Acquisition
+- point
+- point
+
+## Step 6: Revenue Growth
+- point
+- point
+
+Keep the points short and easy to understand.
+""";
+
+      final response = await model.generateContent([Content.text(prompt)]);
+
+      if (kDebugMode) {
+        print(response.text);
+      }
+
+      setState(() {
+        _generatedText = response.text ?? "No response generated.";
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _generatedText = "Error: $e";
+        _isLoading = false;
+      });
     }
-
-    setState(() {
-      _isLoading = false;
-      _generatedText = response.text as String;
-    });
   }
 
-  void _onGenerateButtonPressed() {
+  void _onGeneratePressed() {
+    if (_controller.text.trim().isEmpty) return;
+
     setState(() {
       _isLoading = true;
+      _generatedText = "";
     });
-    _generatePrompt();
+
+    _generatePlan();
+  }
+
+  Widget _buildResultCard() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: MarkdownBody(
+        data: _generatedText,
+        styleSheet: MarkdownStyleSheet(
+          h2: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          p: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            height: 1.6,
+          ),
+          listBullet: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Business Plan")),
+      appBar: AppBar(
+        title: const Text("Business Plan"),
+        centerTitle: true,
+      ),
       body: Stack(
         fit: StackFit.expand,
-        children: <Widget>[
+        children: [
+          /// Background Image
           Image.asset(
             "images/bg1.jpg",
             fit: BoxFit.cover,
           ),
+
+          /// Blur Effect
           BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-              child: Container(
-                color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0),
-              )),
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Container(
+              color: Colors.black.withOpacity(0.2),
+            ),
+          ),
+
+          /// Main Content
           SingleChildScrollView(
-            child: Center(
-              child: Column(
-                children: [
-                  const SizedBox(height: 30.0),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: TextField(
-                      controller: _controller,
-                      style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255)),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                          borderSide: const BorderSide(color: Colors.white),
-                        ),
-                        labelText: 'what is your startup idea?',
-                        labelStyle: const TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+
+                /// Startup Idea Input
+                TextField(
+                  controller: _controller,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: "Enter your startup idea...",
+                    hintStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.black.withOpacity(0.4),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                /// Generate Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: _onGenerateButtonPressed,
-                    child: const Text('Create Plan'),
+                  onPressed: _onGeneratePressed,
+                  child: const Text(
+                    "Generate Plan",
+                    style: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 30),
-                  if (_isLoading) const CircularProgressIndicator(),
-                  const SizedBox(height: 30),
-                  if (_generatedText.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        _generatedText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 30),
+
+                /// Loading
+                if (_isLoading) const CircularProgressIndicator(),
+
+                /// Result
+                if (!_isLoading && _generatedText.isNotEmpty)
+                  _buildResultCard(),
+              ],
             ),
           ),
         ],

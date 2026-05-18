@@ -47,33 +47,56 @@ class _StartupaipageState extends State<Startupaipage>
 
   Future<void> _generatePrompt() async {
     final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: 'AIzaSyAOkOh4gSDYFNP4jM_n7x5yk2DNlvALLQE');
+        model: "gemini-2.5-flash",
+        apiKey:
+            'AIzaSyDFPEosgraV0yCVzkGRcMDOPPOa2YVOOKs'); // Replace with your Gemini API Key
 
     final combinedPrompt = '''
-Generate a concise and engaging startup introduction message using the following details:
+Generate a concise startup introduction message in MARKDOWN format.
 
-Start with a centered line: "Welcome to Startup AI!"
+Startup Idea:
+${_controller.text}
 
-Then, based on the inputs provided below (without including the questions themselves):
+Problem it Solves:
+${_controller_.text}
 
-1. Startup Idea: ${_controller.text}
-2. Problem it Solves: ${_controller_.text}
+Structure the response exactly like this:
 
-Summarize the startup idea and the core problem it aims to address. 
+# Welcome to Startup AI
 
-Then, guide the user on how they can kickstart their journey using design thinking principles — like empathizing with users, defining the problem, ideating solutions, prototyping, and testing.
+## Startup Overview
+Explain the startup idea and the problem it solves in simple words.
 
-Mention how our app can support them in each phase through dedicated sections:
+## Your Startup Journey (Design Thinking)
+Explain how the user can start their journey using design thinking:
+- Empathize with users
+- Define the problem
+- Ideate solutions
+- Prototype ideas
+- Test with users
 
-- **Brainstorming**: For generating and organizing ideas.
-- **Business Plan**: To structure and define their model.
-- **Market Analyzing**: For validating demand and competition.
-- **Daily Targets**: To set small goals and build momentum.
+## How ThinkTank Helps You
 
-End the message by encouraging them to explore these sections and wishing them success. Close with a warm “Thank you for choosing Startup AI!”
+### Brainstorming
+Explain how this section helps generate ideas.
 
-Keep the message concise, supportive, and motivating.
+### Business Plan
+Explain how this section helps structure the startup.
+
+### Market Analyzing
+Explain how this section validates the market and demand.
+
+### Daily Targets
+Explain how this section helps users stay consistent with goals.
+
+## Final Message
+Encourage the user to explore the platform and wish them success.
+
+Finish with:
+
+**Thank you for choosing Startup AI!**
+
+Keep the explanation short, motivating, and beginner friendly.
 ''';
     final content = [Content.text(combinedPrompt)];
 

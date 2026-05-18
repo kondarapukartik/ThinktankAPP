@@ -1,9 +1,8 @@
 // ignore: file_names
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -11,8 +10,7 @@ class MarketAnalyzingPage extends StatefulWidget {
   const MarketAnalyzingPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _MarketAnalyzingPageState createState() => _MarketAnalyzingPageState();
+  State<MarketAnalyzingPage> createState() => _MarketAnalyzingPageState();
 }
 
 class _MarketAnalyzingPageState extends State<MarketAnalyzingPage> {
@@ -29,7 +27,6 @@ class _MarketAnalyzingPageState extends State<MarketAnalyzingPage> {
         _image = File(pickedFile.path);
       });
 
-      // Trigger the prompt generation after selecting the image
       _generatePrompt();
     }
   }
@@ -41,43 +38,54 @@ class _MarketAnalyzingPageState extends State<MarketAnalyzingPage> {
 
     try {
       final model = GenerativeModel(
-          model: 'gemini-1.5-flash', // Adjust model name if needed
-          apiKey: 'AIzaSyAOkOh4gSDYFNP4jM_n7x5yk2DNlvALLQE');
+        model: "gemini-2.5-flash",
+        apiKey: "AIzaSyDFPEosgraV0yCVzkGRcMDOPPOa2YVOOKs",
+      );
 
-      // Read image bytes
       final imageBytes = await _image!.readAsBytes();
-
-      // Create a DataPart for the image
       final imagePart = DataPart('image/jpeg', imageBytes);
 
-      // Create a prompt for the image analysis
-      const predefinedPrompt = "Analyze the following market-related image:";
-      const combinedPrompt = "$predefinedPrompt\n\n";
+      const prompt = '''
+Analyze this business related image.
 
-      // Send the prompt and image to the OpenAI API
-      final response = await model.generateContent(
-        [
-          Content.multi([
-            TextPart(combinedPrompt),
-            imagePart, // Include the image data
-          ]),
-        ],
-      );
+Return the explanation in MARKDOWN format.
+
+Structure:
+
+## What this image shows
+Explain clearly what the image represents.
+
+## Key Insight
+If the image contains charts or numbers, explain the trend simply.
+
+## Business Opportunity
+Explain the opportunity in simple words.
+
+Keep everything short and easy to understand for normal people.
+''';
+
+      final response = await model.generateContent([
+        Content.multi([
+          TextPart(prompt),
+          imagePart,
+        ])
+      ]);
 
       if (kDebugMode) {
         print(response.text);
       }
 
       setState(() {
-        _generatedText = response.text!;
+        _generatedText = response.text ?? "No analysis available.";
       });
     } catch (e) {
-      setState(() {
-        _generatedText = "Failed to analyze the image. Please try again.";
-      });
       if (kDebugMode) {
-        print("Error generating prompt: $e");
+        print(e);
       }
+
+      setState(() {
+        _generatedText = "Failed to analyze the image.";
+      });
     } finally {
       setState(() {
         _isLoading = false;
@@ -88,66 +96,63 @@ class _MarketAnalyzingPageState extends State<MarketAnalyzingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Market Analyzing")),
-      body: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          Image.asset(
-            "images/bg.jpg", // Default background image
-            fit: BoxFit.cover,
-          ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(
-              color: const Color.fromARGB(255, 255, 255, 255)
-                  .withOpacity(0), // Adjust opacity as needed
-            ),
-          ),
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      // HEADER SAME AS YOUR PROJECT
+      appBar: AppBar(
+        title: const Text("Market Analyzing"),
+      ),
+
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: _image == null
+
+            // BEFORE UPLOAD
+            ? Center(
+                child: ElevatedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.upload),
+                  label: const Text("Upload Image"),
+                ),
+              )
+
+            // AFTER UPLOAD
+            : Column(
                 children: [
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _pickImage,
-                      child: const Text("Upload Image"),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      _image!,
+                      height: 280,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  _image != null
-                      ? Container(
-                          height: 250,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              _image!,
-                              fit: BoxFit.cover,
+                  const SizedBox(height: 25),
+                  if (_isLoading) const CircularProgressIndicator(),
+                  if (!_isLoading && _generatedText.isNotEmpty)
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Markdown(
+                          data: _generatedText,
+                          styleSheet: MarkdownStyleSheet(
+                            p: const TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
+                            h2: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        )
-                      : Container(),
-                  const SizedBox(height: 20),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(
-                          _generatedText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                          textAlign: TextAlign.center,
                         ),
+                      ),
+                    )
                 ],
               ),
-            ),
-          ),
-        ],
       ),
     );
   }
